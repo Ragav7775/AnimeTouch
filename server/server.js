@@ -303,8 +303,8 @@ app.post('/api/login', async (req, res) => {
         const otp = generateOTP();
         user.otp = otp;
         user.otpExpiry = Date.now() + 10 * 60 * 1000;
-        await sendOTPEmail(user.email, otp);
         await user.save();
+        await sendOTPEmail(user.email, otp);
       } else {
         return res.json({ success: false, message: 'Invalid password' });
       }
