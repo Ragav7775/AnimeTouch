@@ -290,27 +290,98 @@ app.post('/api/signup', async (req, res) => {
   }
 });
 
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
+// app.post('/api/login', async (req, res) => {
+//   const { username, password } = req.body;
+//   try {
+//     const user = await User.findOne({ username });
+//     console.log("Found user:", user);
+
+//     if (user) {
+//       const match = await bcrypt.compare(password, user.password);
+//       console.log("Password match:", match);
+//       if (match) {
+//         const otp = generateOTP();
+//         user.otp = otp;
+//         user.otpExpiry = Date.now() + 10 * 60 * 1000;
+//         await user.save();
+//         await sendOTPEmail(user.email, otp);
+//       } else {
+//         return res.json({ success: false, message: 'Invalid password' });
+//       }
+//       res.json({ success: true, message: 'OTP sent to your email' });
+//     } else {
+//       return res.json({ success: false, message: 'Invalid username' });
+//     }
+//   } catch (error) {
+//     console.error('Error in login:', error);
+//     res.status(500).json({ success: false, message: 'Internal Server Error' });
+//   }
+// });
+
+
+// app.post('/api/verify-otp', async (req, res) => {
+//   const { username, otp } = req.body;
+
+//   try {
+//     const user = await User.findOne({ username });
+//     if (user) {
+//       if (user.otp === otp && Date.now() < user.otpExpiry) {
+//         user.otp = null; // Clear OTP after successful verification
+//         user.otpExpiry = null;
+//         await user.save();
+
+//         return res.json({ success: true });
+//       } else {
+//         return res.json({ success: false, message: 'Invalid or expired OTP' });
+//       }
+//     } else {
+//       return res.json({ success: false, message: 'Invalid username' });
+//     }
+//   } catch (error) {
+//     console.error('Error in OTP verification:', error);
+//     res.status(500).json({ success: false, message: 'Internal Server Error' });
+//   }
+// });
+
+
+app.post('/api/send-otp', async (req, res) => {
+  const { username } = req.body;
+
   try {
     const user = await User.findOne({ username });
-    console.log("Found user:", user);
+    if (user) {
+      const otp = generateOTP();
+      user.otp = otp;
+      user.otpExpiry = Date.now() + 10 * 60 * 1000; // OTP expires in 10 minutes
+      await user.save();
+      await sendOTPEmail(user.email, otp);
+      res.json({ success: true, message: 'OTP has been sent to your registered email.' });
+    } else {
+      res.json({ success: false, message: 'Invalid username' });
+    }
+  } catch (error) {
+    console.error('Error in OTP generation:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+});
 
+app.post('/api/login', async (req, res) => {
+  const { username, password, otp } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
     if (user) {
       const match = await bcrypt.compare(password, user.password);
-      console.log("Password match:", match);
-      if (match) {
-        const otp = generateOTP();
-        user.otp = otp;
-        user.otpExpiry = Date.now() + 10 * 60 * 1000;
+      if (match && user.otp === otp && Date.now() < user.otpExpiry) {
+        user.otp = null; // Clear OTP after successful verification
+        user.otpExpiry = null;
         await user.save();
-        await sendOTPEmail(user.email, otp);
+        res.json({ success: true, message: 'Login successful' });
       } else {
-        return res.json({ success: false, message: 'Invalid password' });
+        res.json({ success: false, message: 'Invalid password or OTP' });
       }
-      res.json({ success: true, message: 'OTP sent to your email' });
     } else {
-      return res.json({ success: false, message: 'Invalid username' });
+      res.json({ success: false, message: 'Invalid username' });
     }
   } catch (error) {
     console.error('Error in login:', error);
@@ -319,29 +390,8 @@ app.post('/api/login', async (req, res) => {
 });
 
 
-app.post('/api/verify-otp', async (req, res) => {
-  const { username, otp } = req.body;
 
-  try {
-    const user = await User.findOne({ username });
-    if (user) {
-      if (user.otp === otp && Date.now() < user.otpExpiry) {
-        user.otp = null; // Clear OTP after successful verification
-        user.otpExpiry = null;
-        await user.save();
 
-        return res.json({ success: true });
-      } else {
-        return res.json({ success: false, message: 'Invalid or expired OTP' });
-      }
-    } else {
-      return res.json({ success: false, message: 'Invalid username' });
-    }
-  } catch (error) {
-    console.error('Error in OTP verification:', error);
-    res.status(500).json({ success: false, message: 'Internal Server Error' });
-  }
-});
 
 app.get('/api/status', (req, res) => {
   res.json({ status: 'Server is Running' });
