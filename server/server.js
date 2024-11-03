@@ -222,7 +222,7 @@ const userSchema = new mongoose.Schema({
   otpExpiry: Date,
 });
 
-const User = mongoose.model('User ', userSchema);
+const User = mongoose.model('User', userSchema);
 
 app.use(cors({
   origin: 'https://animetouch.vercel.app',  // client URL
@@ -238,7 +238,7 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send OTP via email
+
 const sendOTPEmail = (email, otp) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -264,6 +264,7 @@ const sendOTPEmail = (email, otp) => {
   });
 };
 
+
 app.post('/api/signup', async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -286,21 +287,22 @@ app.post('/api/signup', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-
   try {
     const user = await User.findOne({ username });
+    console.log("Found user:", user);
+
     if (user) {
       const match = await bcrypt.compare(password, user.password);
+      console.log("Password match:", match);
       if (match) {
         const otp = generateOTP();
         user.otp = otp;
-        user.otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+        user.otpExpiry = Date.now() + 10 * 60 * 1000;
         await user.save();
         sendOTPEmail(user.email, otp);
       } else {
         return res.json({ success: false, message: 'Invalid password' });
       }
-
       res.json({ success: true, message: 'OTP sent to your email' });
     } else {
       return res.json({ success: false, message: 'Invalid username' });
@@ -310,6 +312,7 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 });
+
 
 app.post('/api/verify-otp', async (req, res) => {
   const { username, otp } = req.body;
