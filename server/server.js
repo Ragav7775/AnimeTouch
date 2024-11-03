@@ -58,7 +58,7 @@ const sendOTPEmail = (email, otp) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
-    port: 587, // or 465 if you're using SSL
+    port: 465, // or 465 if you're using SSL
     secure: false,
     auth: {
       user: process.env.EMAIL_USER,
@@ -111,24 +111,26 @@ app.post('/api/login', async (req, res) => {
   try {
     // Check if user exists
     const user = await User.findOne({ username });
-    if (!user) {
+    if (user) {
+
+      // Verify password
+      const match = await bcrypt.compare(password, user.password);
+      if (match) {
+
+        // Generate OTP, save it in the user document, and send it via email
+        const otp = generateOTP();
+        user.otp = otp;
+        user.otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+        await user.save();
+        sendOTPEmail(user.email, otp);
+      } else {
+        return res.json({ success: false, message: 'Invalid password' });
+      }
+
+      res.json({ success: true, message: 'OTP sent to your email' });
+    } else {
       return res.json({ success: false, message: 'Invalid username' });
     }
-
-    // Verify password
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.json({ success: false, message: 'Invalid password' });
-    }
-
-    // Generate OTP, save it in the user document, and send it via email
-    const otp = generateOTP();
-    user.otp = otp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes from now
-    await user.save();
-    sendOTPEmail(user.email, otp);
-
-    res.json({ success: true, message: 'OTP sent to your email' });
   } catch (error) {
     console.error('Error in login:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
