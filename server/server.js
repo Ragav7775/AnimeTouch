@@ -239,33 +239,33 @@ const generateOTP = () => {
 };
 
 
-const sendOTPEmail = async (email, otp) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.sendgrid.net',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+// const sendOTPEmail = async (email, otp) => {
+//   const transporter = nodemailer.createTransport({
+//     service: 'gmail',
+//     host: 'smtp.sendgrid.net',
+//     port: 587,
+//     secure: false,
+//     auth: {
+//       user: process.env.EMAIL_USER,
+//       pass: process.env.EMAIL_PASS,
+//     },
+//   });
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Your OTP Code',
-    text: `Your OTP code is ${otp}`,
-  };
+//   const mailOptions = {
+//     from: process.env.EMAIL_USER,
+//     to: email,
+//     subject: 'Your OTP Code',
+//     text: `Your OTP code is ${otp}`,
+//   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Error sending OTP email:', error);
-      return;
-    }
-    console.log('OTP email sent:', info.response);
-  });
-};
+//   transporter.sendMail(mailOptions, (error, info) => {
+//     if (error) {
+//       console.error('Error sending OTP email:', error);
+//       return;
+//     }
+//     console.log('OTP email sent:', info.response);
+//   });
+// };
 
 
 app.post('/api/signup', async (req, res) => {
@@ -304,7 +304,34 @@ app.post('/api/login', async (req, res) => {
         user.otp = otp;
         user.otpExpiry = Date.now() + 10 * 60 * 1000;
         await user.save();
-        await sendOTPEmail(user.email, otp);
+        // await sendOTPEmail(user.email, otp);
+
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          host: 'smtp.sendgrid.net',
+          port: 587,
+          secure: false,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: user.email,
+          subject: 'Your OTP Code',
+          text: `Your OTP code is ${otp}`,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error('Error sending OTP email:', error);
+            return;
+          }
+          console.log('OTP email sent:', info.response);
+        });
+
       } else {
         return res.json({ success: false, message: 'Invalid password' });
       }
