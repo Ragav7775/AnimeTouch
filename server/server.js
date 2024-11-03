@@ -325,7 +325,7 @@ app.post('/api/verify-otp', async (req, res) => {
   try {
     const user = await User.findOne({ username });
     if (user) {
-      if (user.otp === otp && Date.now() < user.otpExpiry) {
+      if (user.otp === otp) {
         user.otp = null; // Clear OTP after successful verification
         user.otpExpiry = null;
         await user.save();
