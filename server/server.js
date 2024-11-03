@@ -304,11 +304,10 @@ app.post('/api/login', async (req, res) => {
         user.otp = otp;
         user.otpExpiry = Date.now() + 10 * 60 * 1000;
         await user.save();
-
+        await sendOTPEmail(user.email, otp);
       } else {
         return res.json({ success: false, message: 'Invalid password' });
       }
-      await sendOTPEmail(user.email, otp);
       res.json({ success: true, message: 'OTP sent to your email' });
     } else {
       return res.json({ success: false, message: 'Invalid username' });
