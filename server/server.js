@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 app.use(cors({
-  origin: 'https://animetouch-demo.vercel.app',  // client URL
+  origin: 'https://animetouch.vercel.app',  // client URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
