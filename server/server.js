@@ -239,7 +239,7 @@ const generateOTP = () => {
 };
 
 
-const sendOTPEmail = async (email, otp) => {
+const sendOTPEmail = (email, otp) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.sendgrid.net',
@@ -353,8 +353,8 @@ app.post('/api/send-otp', async (req, res) => {
       const otp = generateOTP();
       user.otp = otp;
       user.otpExpiry = Date.now() + 10 * 60 * 1000; // OTP expires in 10 minutes
+      sendOTPEmail(user.email, otp);
       await user.save();
-      await sendOTPEmail(user.email, otp);
       res.json({ success: true, message: 'OTP has been sent to your registered email.' });
     } else {
       res.json({ success: false, message: 'Invalid username' });
