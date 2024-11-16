@@ -378,7 +378,7 @@ app.post('/api/login', async (req, res) => {
         await user.save();
         res.json({ success: true, message: 'Login successful' });
       } else {
-        res.json({ success: false, message: 'Invalid password or OTP' });
+        res.json({ success: false });
       }
     } else {
       res.json({ success: false, message: 'Invalid username' });
